@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#3B3E44">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dubblecheck: move your work between AIs without losing your place</title>
+<meta name="description" content="Dubblecheck captures a complete AI response, prose and code together, files it in a color folder you control, and gives you one clean file ready for the next AI.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#3B3E44; --bg2:#34373C; --card:#45484F; --ink:#F3F1EC; --body:#D6D3CC; --muted:#B3B0A9; --line:#55595F;
+  --accent:#9DB3FF; --accent-ink:#121A3A; --accent-soft:#2F3A5E;
+  --panel:#24262B; --panel2:#2E3137; --panel-line:#4A4E56; --panel-ink:#F4F1EA; --panel-muted:#A8A49B; --code:#0E0F12;
+  --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#3B3E44; --bg2:#34373C; --card:#45484F; --ink:#F3F1EC; --body:#D6D3CC; --muted:#B3B0A9; --line:#55595F;
+    --accent:#9DB3FF; --accent-ink:#121A3A; --accent-soft:#2F3A5E;
+    --panel:#24262B; --panel2:#2E3137; --panel-line:#4A4E56;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#3B3E44; --bg2:#34373C; --card:#45484F; --ink:#F3F1EC; --body:#D6D3CC; --muted:#B3B0A9; --line:#55595F;
+  --accent:#9DB3FF; --accent-ink:#121A3A; --accent-soft:#2F3A5E;
+  --panel:#24262B; --panel2:#2E3137; --panel-line:#4A4E56;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+h1,h2{font-family:var(--serif);font-weight:400;margin:0;letter-spacing:-.005em}
+h1{font-size:clamp(44px,7vw,80px);line-height:1}
+h2{font-size:clamp(34px,4.6vw,56px);line-height:1.05}
+h3{margin:0;font-size:20px;font-weight:600;line-height:1.3}
+p{margin:0}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:var(--accent)}
+.lede{font-size:clamp(17px,1.6vw,20px);color:var(--body);max-width:36em}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:12px;border:0;font:600 16px var(--sans);text-decoration:none;cursor:pointer}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-dark{background:var(--ink);color:var(--bg)}
+section{padding:clamp(64px,9vw,120px) 0}
+.alt{background:var(--bg2)}
+.rule{border-top:1px solid var(--line)}
+
+/* header */
+header{border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;min-height:76px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.brand span{font-family:var(--serif);font-size:28px}
+nav{display:flex;align-items:center;gap:28px;font-size:15px}
+nav a{color:var(--ink);text-decoration:none}
+nav a:hover{color:var(--accent)}
+nav .btn{min-height:44px;padding:0 20px;border-radius:999px;font-weight:500;font-size:15px}
+@media (max-width:860px){nav .nl{display:none}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,80px);align-items:center}
+.hero-copy{display:flex;flex-direction:column;gap:26px}
+.hero h1 em{font-style:italic}
+.cta{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.cta small{font-size:14px;color:var(--muted)}
+.flow{background:var(--panel);color:var(--panel-ink);border-radius:24px;padding:clamp(22px,3vw,36px);display:flex;flex-direction:column;gap:12px}
+.flow .step{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:var(--panel2)}
+.flow .step.light{background:#F4F1EA;color:#16181D}
+.flow .step.dash{background:transparent;border:1px dashed var(--panel-line)}
+.flow .t{font-weight:600}
+.flow .s{font-size:14px;color:var(--panel-muted)}
+.flow .step.light .s{color:#5C5A55}
+.flow .down{display:flex;justify-content:center;color:var(--panel-muted)}
+.flow .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+@media (max-width:900px){.hero{grid-template-columns:1fr}}
+
+/* grids */
+.head{display:flex;flex-direction:column;gap:18px;max-width:780px;margin-bottom:clamp(32px,5vw,56px)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.box{display:flex;flex-direction:column;gap:12px;padding:30px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.box p{color:var(--body);font-size:16px}
+.box .n{font-family:var(--mono);font-size:13px;color:var(--accent)}
+.icon{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+@media (max-width:900px){.grid3{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.grid3,.grid2{grid-template-columns:1fr}}
+
+/* demo sections */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:clamp(40px,7vw,96px);align-items:center}
+.split.rev{grid-template-columns:380px minmax(0,1fr)}
+.split.rev .demo{order:-1}
+.split .copy{display:flex;flex-direction:column;gap:24px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:20px}
+.steps li{display:flex;gap:16px}
+.steps .n{font-family:var(--mono);font-size:14px;color:var(--accent);padding-top:2px}
+.steps b{display:block;font-size:18px}
+.steps span{color:var(--body);font-size:16px}
+.defs{display:flex;flex-direction:column;gap:20px}
+.defs b{display:block;font-size:18px}
+.defs span{color:var(--body);font-size:16px}
+@media (max-width:900px){.split,.split.rev{grid-template-columns:1fr}.split.rev .demo{order:0}.demo,.demo-col{justify-self:center;width:100%;max-width:400px}}
+.catch{margin:8px 0 0;font-family:var(--serif);font-size:clamp(26px,2.6vw,34px);line-height:1.15;color:var(--ink)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.signup{display:flex;flex-direction:column;gap:8px;width:100%;max-width:520px}
+.signup .f{display:flex;gap:8px;flex-wrap:wrap}
+.signup input{flex:1 1 200px;min-height:52px;box-sizing:border-box;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:16px var(--sans)}
+.signup .msg,.contact-form .msg{font-size:14px;color:var(--muted);min-height:1.2em}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,80px);align-items:start}
+.contact .copy{display:flex;flex-direction:column;gap:22px}
+.contact-form{display:flex;flex-direction:column;gap:16px;padding:clamp(20px,3vw,32px);border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:14px;font-weight:500}
+.fld input,.fld textarea{box-sizing:border-box;width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);resize:vertical}
+@media (max-width:900px){.contact{grid-template-columns:1fr}}
+.demo-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.join{display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.join[hidden]{display:none}
+.join h3{margin:0;font-size:18px;font-weight:600}
+.join p{margin:0;font-size:15px;color:var(--body)}
+.join .f{display:flex;gap:8px;flex-wrap:wrap}
+.join input{flex:1 1 180px;min-height:48px;background:var(--bg);box-sizing:border-box;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:16px var(--sans)}
+.join .btn{min-height:48px;padding:0 20px;font-size:15px}
+.join .msg{font-size:14px;color:var(--muted);min-height:1.2em}
+@media (prefers-reduced-motion:no-preference){.join.in{animation:joinIn .35s ease-out}@keyframes joinIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+
+.demo{background:var(--panel);color:var(--panel-ink);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px;min-height:640px;font-size:14px}
+.demo .top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--panel-muted)}
+.demo button{font-family:var(--sans);cursor:pointer}
+.pills{display:flex;gap:6px}
+.pill{flex:1;min-height:44px;padding:0 4px;border-radius:10px;font-size:12px;font-weight:500;background:transparent;color:var(--panel-muted);border:1px solid var(--panel-line)}
+.pill.done{background:var(--panel2);color:var(--panel-ink);border-color:var(--panel2)}
+.pill.on{background:#F4F1EA;color:#16181D;border-color:#F4F1EA}
+.src{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--panel-muted)}
+.resp{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;font-size:13px;line-height:1.5;background:var(--panel2);border:2px solid var(--panel2);transition:border-color .3s}
+.resp pre{margin:0;padding:10px 12px;background:var(--code);border-radius:8px;font:12px/1.5 var(--mono);color:#E6E1D6;overflow-x:auto}
+.stage{flex:1;display:flex;flex-direction:column;gap:10px}
+.hint{font-size:13px;color:var(--panel-muted)}
+.big{min-height:52px;border:0;border-radius:12px;background:#F4F1EA;color:#16181D;font-size:16px;font-weight:600}
+.opt{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--panel-line);border-radius:10px;background:var(--panel2);color:var(--panel-ink);font-size:14px;text-align:left}
+.sw{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.filed{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:10px;background:var(--panel2)}
+.filed .m{font-family:var(--mono);font-size:11px;color:var(--panel-muted)}
+.row{display:flex;gap:8px}
+.row .opt{flex:1;justify-content:center;font-size:15px;min-height:48px}
+.file{display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;background:#F4F1EA;color:#16181D}
+.file .fs{font-size:12px;color:#5C5A55}
+.ghost{min-height:44px;border:1px solid var(--panel-line);border-radius:10px;background:transparent;color:var(--panel-ink);font-size:14px}
+.foot{font-size:12px;color:var(--panel-muted);text-align:center}
+.chips{display:flex;gap:6px}
+.chip{flex:1;min-height:36px;padding:0 4px;border-radius:999px;font-size:12px;background:transparent;color:var(--panel-muted);border:1px solid var(--panel-line)}
+.chip.on{background:#2F5BEA;color:#fff;border-color:#2F5BEA}
+.thread{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:var(--panel2)}
+.thread .tt{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.thread .m{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--panel-muted)}
+.clip{display:flex;flex-direction:column;gap:4px;min-height:44px;padding:10px 12px;border-radius:10px;background:var(--panel2);border:2px solid var(--panel2);color:var(--panel-ink);text-align:left}
+.clip.on{border-color:#7FC8A9}
+.clip .m{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--panel-muted)}
+.clip .x{font-size:12px;line-height:1.45}
+.canon{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px dashed var(--panel-line);border-radius:10px;font-size:12px}
+.exp{min-height:48px;border:0;border-radius:12px;font-size:15px;font-weight:600;background:#F4F1EA;color:#16181D}
+.exp:disabled{background:var(--panel2);color:#7A776F;cursor:default}
+[hidden]{display:none!important}
+
+/* manifesto */
+.dark{background:var(--panel);color:var(--panel-ink);text-align:center}
+.dark .wrap{display:flex;flex-direction:column;align-items:center;gap:26px}
+.dark .big-q{font-family:var(--serif);font-style:italic;font-size:clamp(44px,6.5vw,72px);line-height:1.05}
+.dark p.sub{color:#C9C4B8;max-width:36em;font-size:clamp(17px,1.6vw,20px)}
+.tags{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.tags span{padding:9px 16px;border:1px solid var(--panel-line);border-radius:999px;font-family:var(--mono);font-size:13px}
+
+/* builders */
+.builders{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,80px);align-items:center}
+.builders .copy{display:flex;flex-direction:column;gap:22px}
+.ready{display:flex;flex-direction:column;gap:16px;padding:32px;border:1px solid var(--line);border-radius:20px;background:var(--card)}
+.ready div{display:flex;align-items:center;gap:12px;font-size:17px}
+.ready small{font-size:14px;color:var(--muted);padding-top:8px;border-top:1px solid var(--line)}
+@media (max-width:900px){.builders{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--line);padding:32px 0}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+footer .b{font-family:var(--serif);font-size:22px;color:var(--ink);margin-right:10px}
+</style>
+<script>
+/* ===== Dubblecheck site settings: edit these two lines ===== */
+window.DC_CONFIG = {
+  /* Where early-access emails go. FormSubmit is free and needs no account:
+     the first signup sends a confirmation email to this address; click it once. */
+  formEndpoint: "https://formsubmit.co/ajax/markneed@gogojuju.com",
+  /* Visit counter. Sign up free at goatcounter.com, then put your code here,
+     e.g. "dubblecheck" for dubblecheck.goatcounter.com. Leave "" to turn it off. */
+  goatcounterCode: ""
+};
+(function(){var c=window.DC_CONFIG.goatcounterCode;if(!c)return;
+  var s=document.createElement("script");s.async=true;s.src="https://gc.zgo.at/count.js";
+  s.setAttribute("data-goatcounter","https://"+c+".goatcounter.com/count");document.head.appendChild(s);})();
+function dcEvent(name){try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:name,title:name,event:true});}catch(e){}}
+</script>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Dubblecheck home">
+      <svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15l5 5L19 8"/><path d="M13 19l1 1L25 8"/></svg>
+      <span>Dubblecheck</span>
+    </a>
+    <nav aria-label="Main">
+      <a class="nl" href="#demo">How it works</a>
+      <a class="nl" href="#library">Find &amp; build</a>
+      <a class="nl" href="#who">Who it’s for</a>
+      <a class="nl" href="#builders">For builders</a>
+      <a class="btn btn-dark" href="#top-cta">Get early access</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section>
+  <div class="wrap hero">
+    <div class="hero-copy">
+      <div class="kicker">Launching soon · early access open</div>
+      <h1>Move your work between AIs <em>without losing your place.</em></h1>
+      <p class="lede">Speak or highlight to capture a whole AI response, or just the part you need, with prose and code kept together. Dubblecheck files it in a color folder you control and gives you one clean file ready for the next AI.</p>
+      <div class="cta" id="top-cta">
+        <form class="signup" data-source="hero" novalidate>
+          <label for="heroEmail" class="vh">Email address</label>
+          <div class="f">
+            <input id="heroEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            <button type="submit" class="btn btn-primary">Request early access</button>
+          </div>
+          <div class="msg" role="status" aria-live="polite"></div>
+        </form>
+        <small>For people who run the same work through Claude, ChatGPT and Gemini.</small>
+      </div>
+    </div>
+    <div class="flow" aria-label="One handoff, start to finish">
+      <div class="step"><span class="dot" style="background:#D97757"></span><div><div class="t">Claude drafts</div><div class="s">Prose and code, mixed together</div></div></div>
+      <div class="down" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="step light"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2F5BEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><div><div class="t">Dubblecheck packs it</div><div class="s">One file, formatting kept, source attached</div></div></div>
+      <div class="down" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="pair">
+        <div class="step"><span class="dot" style="background:#7FC8A9"></span><div class="t">ChatGPT reviews</div></div>
+        <div class="step"><span class="dot" style="background:#8AB4F8"></span><div class="t">Gemini critiques</div></div>
+      </div>
+      <div class="down" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div class="step dash"><span class="dot" style="background:#D97757"></span><div class="t">Back to Claude, every note attached</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="rule">
+  <div class="wrap">
+    <div class="head">
+      <div class="kicker">The problem</div>
+      <h2>Three AIs, one project, and a mess in between.</h2>
+    </div>
+    <div class="grid3">
+      <div class="box"><h3>It arrives in pieces</h3><p>Paste the prose, then the code, then more prose, and the next AI starts answering before it has the whole thing.</p></div>
+      <div class="box"><h3>Code breaks on the way</h3><p>Copy and paste strips indentation and formatting, so every handoff turns into cleanup.</p></div>
+      <div class="box"><h3>The good part gets lost</h3><p>Weeks later, the exchange you need is buried in a thread the sidebar keeps reshuffling.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="demo" class="alt">
+  <div class="wrap split">
+    <div class="copy">
+      <div class="kicker">Try it</div>
+      <h2>Capture, file, hand off.</h2>
+      <p class="lede">This is the core loop. It plays on its own. Tap any step to drive it yourself.</p>
+      <ol class="steps">
+        <li><span class="n">1</span><div><b>Answer</b><span>Claude writes a response with prose and code mixed together.</span></div></li>
+        <li><span class="n">2</span><div><b>Capture</b><span>Highlight just the passage you need, or say “Select all, save that” to grab the whole response as one unit.</span></div></li>
+        <li><span class="n">3</span><div><b>File</b><span>It lands in the color folder you pick, stamped with where and when it came from.</span></div></li>
+        <li><span class="n">4</span><div><b>Hand off</b><span>Export one file to ChatGPT or Gemini, with code blocks and formatting carried along.</span></div></li>
+      </ol>
+      <p class="catch">Clip just the part you need, or all of it, before it’s gone.</p>
+    </div>
+    <div class="demo-col">
+    <div class="demo" id="loop" aria-label="Interactive demo: capture, file, hand off">
+      <div class="top"><span>Live demo</span><span id="stepLabel">Step 1 of 4</span></div>
+      <div class="pills" id="pills"></div>
+      <div class="src"><span class="dot" style="background:#D97757;width:8px;height:8px"></span>Claude response</div>
+      <div class="resp" id="resp">
+        <p>Here’s the retry wrapper with backoff:</p>
+<pre>async function retry(fn, n = 3) {
+  for (let i = 0; i &lt; n; i++) {
+    try { return await fn(); }
+    catch { await wait(i); }
+  }
+}</pre>
+        <p>Three tries is a sensible default.</p>
+      </div>
+      <div class="stage" aria-live="polite">
+        <div data-s="0"><div class="hint">Say it, or tap it:</div><button type="button" class="big" id="capBtn" style="width:100%;margin-top:10px">“Select all, save that”</button></div>
+        <div data-s="1" hidden><div class="hint">Captured whole: 2 paragraphs, 1 code block. File it:</div><div id="folders" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div></div>
+        <div data-s="2" hidden>
+          <div class="filed"><div style="display:flex;align-items:center;gap:8px;font-weight:600"><span class="sw" id="fSw"></span>Filed in <span id="fName"></span></div><div class="m">Claude, Sep 29, page 3</div></div>
+          <div class="hint" style="margin-top:10px">Hand it to:</div>
+          <div class="row" id="targets" style="margin-top:8px"></div>
+        </div>
+        <div data-s="3" hidden>
+          <div class="file"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16181D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><div><div style="font-weight:600" id="fileName"></div><div class="fs">Ready for <span class="tgt"></span>, code formatting kept</div></div></div>
+          <div class="hint" style="margin-top:10px">One file. <span class="tgt"></span> sees the whole response before it answers.</div>
+          <button type="button" class="ghost" id="replay" style="width:100%;margin-top:10px">Replay demo</button>
+        </div>
+      </div>
+      <div class="foot" id="loopFoot">Playing on its own. Tap any step to take over.</div>
+    </div>
+    <form class="join signup" id="join" data-source="demo" hidden novalidate>
+      <h3>Want this for your own work?</h3>
+      <p>Leave your email and we’ll let you know when early access opens.</p>
+      <div class="f">
+        <label for="joinEmail" class="vh">Email address</label>
+        <input id="joinEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        <button type="submit" class="btn btn-primary" id="joinBtn">Join the list</button>
+      </div>
+      <div class="msg" role="status" aria-live="polite"></div>
+    </form>
+    </div>
+  </div>
+</section>
+
+<section id="library">
+  <div class="wrap split rev">
+    <div class="copy">
+      <div class="kicker">After the handoff</div>
+      <h2>Find it later. Build with it.</h2>
+      <p class="lede">Every capture lands somewhere you can get back to, and turns into something you can use. Try both tabs.</p>
+      <div class="defs">
+        <div><b>Thread Index</b><span>A lasting record of the conversations you capture, across platforms. It doesn’t reshuffle when the sidebar does.</span></div>
+        <div><b>Canon Builder</b><span>Pull clips from Claude, ChatGPT and Gemini into one ordered document and export it as .docx. Originals stay in their folders.</span></div>
+      </div>
+    </div>
+    <div class="demo" id="lib" aria-label="Interactive demo: Thread Index and Canon Builder">
+      <div class="top"><span>Library</span><span id="libCount"></span></div>
+      <div class="pills" role="group" aria-label="View">
+        <button type="button" class="pill on" data-tab="index" aria-pressed="true">Thread Index</button>
+        <button type="button" class="pill" data-tab="canon" aria-pressed="false">Canon Builder</button>
+      </div>
+      <div id="tabIndex" style="display:flex;flex-direction:column;gap:10px">
+        <div class="hint">Your captured conversations, across platforms, in one record. Filter by AI:</div>
+        <div class="chips" id="chips"></div>
+        <div id="threads" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div id="tabCanon" hidden style="display:flex;flex-direction:column;gap:10px">
+        <div class="hint">Tap clips from any AI to build one document. Originals stay in their folders.</div>
+        <div id="clips" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="canon"><b>Canon: Lit review</b><div id="order"></div></div>
+        <button type="button" class="exp" id="expBtn" disabled>Export as .docx</button>
+        <div class="file" id="expDone" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16181D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><div style="flex:1;font-weight:600;font-size:13px">Exported lit-review-canon.docx</div><button type="button" class="ghost" id="startOver" style="min-height:36px;padding:0 10px;border-color:#BDB7A8;color:#16181D;font-size:12px">Start over</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="who" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div class="kicker">Who it’s for</div>
+      <h2>Anyone doing real work across more than one AI.</h2>
+    </div>
+    <div class="grid2">
+      <div class="box"><div class="n">Power users</div><h3>Builders, writers, analysts</h3><p>You draft in one AI, check in another and refine in a third. Dubblecheck is the layer in between, so code, drafts and critiques move as one piece and far less gets rebuilt by hand.</p></div>
+      <div class="box"><div class="n">Researchers &amp; students</div><h3>Theses, papers, coursework</h3><p>Sources, feedback and draft paragraphs end up scattered across three AIs and a pile of untitled chats. Dubblecheck gives you one index to find them and one document to build from.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="head">
+      <div class="kicker">What’s in it</div>
+      <h2>Built for the handoff, not the chat.</h2>
+    </div>
+    <div class="grid3">
+      <div class="box"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg></div><h3>One-tap full capture</h3><p>Grab an entire response, code blocks included, with one command or one tap.</p></div>
+      <div class="box"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div><h3>File handoff, not paste</h3><p>Give the next AI a single file, so it sees everything before it answers.</p></div>
+      <div class="box"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><h3>Color folders you own</h3><p>Every project gets a color. Clips route there the moment you mark them.</p></div>
+      <div class="box"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div><h3>Source details on every clip</h3><p>Which AI, which thread, what date, what page, saved with each clip.</p></div>
+      <div class="box"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v12M4 12l4 4 4-4M16 20V8M12 12l4-4 4 4"/></svg></div><h3>See what changed</h3><p>Compare one AI’s draft with the next AI’s revision, side by side.</p></div>
+      <div class="box"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></div><h3>Fix log</h3><p>A running list of corrections you’ve made, so you can catch the same mistake if it comes back three drafts later.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="dark">
+  <div class="wrap">
+    <p class="big-q">Captures the human part of AI.</p>
+    <p class="sub">Dubblecheck doesn’t decide what matters. You do. Your clips stay on your device, in folders you control, and go wherever you send them.</p>
+    <div class="tags"><span>Local-first</span><span>Claude, ChatGPT, Gemini</span><span>No AI sorting your work</span></div>
+  </div>
+</section>
+
+<section id="builders">
+  <div class="wrap builders">
+    <div class="copy">
+      <div class="kicker">For engineers &amp; partners</div>
+      <h2>We’re putting the build team together.</h2>
+      <p class="lede">The spec, data model and first sprint are written, and an initial capture scaffold is in place. We’re looking for builders who want to help shape where this goes.</p>
+      <div><a class="btn btn-dark" href="#contact" data-topic="Build team">Start a conversation</a></div>
+    </div>
+    <div class="ready">
+      <h3>Ready to share</h3>
+      <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Product spec</div>
+      <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Data schema</div>
+      <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Sprint 1 backlog</div>
+      <div><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Initial capture scaffold</div>
+      <small>Details shared under NDA.</small>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="alt">
+  <div class="wrap contact">
+    <div class="copy">
+      <div class="kicker">Contact</div>
+      <h2>Questions? Send a message.</h2>
+      <p class="lede">Ask anything about Dubblecheck, early access, or building it with us. It goes straight to the founder.</p>
+    </div>
+    <form class="contact-form" id="contactForm" novalidate>
+      <div class="fld"><label for="cName">Name</label><input id="cName" name="name" type="text" autocomplete="name" required></div>
+      <div class="fld"><label for="cEmail">Email</label><input id="cEmail" name="email" type="email" autocomplete="email" required></div>
+      <div class="fld"><label for="cMsg">Message</label><textarea id="cMsg" name="message" rows="5" required></textarea></div>
+      <input type="hidden" name="topic" id="cTopic" value="General question">
+      <div><button type="submit" class="btn btn-primary">Send message</button></div>
+      <div class="msg" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><span class="b">Dubblecheck</span>A Gogo Juju LLC venture, Southern Oregon</div>
+    <div>© 2026 Gogo Juju LLC · <a href="mailto:markneed@gogojuju.com">markneed@gogojuju.com</a></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* ---------- Loop demo ---------- */
+  const folders=[{name:'Novel draft',c:'#6E8EF5'},{name:'Pricing model',c:'#F59E4B'},{name:'Miscellaneous',c:'#C9C4B8'}];
+  const labels=['Answer','Captured','Filed','Handed off'];
+  const st={step:0,folder:0,target:'ChatGPT',touched:false};
+  const $=id=>document.getElementById(id);
+  const pills=$('pills');
+  labels.forEach((l,i)=>{const b=document.createElement('button');b.type='button';b.className='pill';b.textContent=l;b.onclick=()=>{st.step=i;st.touched=true;draw();if(i>=1)showJoin();};pills.appendChild(b);});
+  folders.forEach((f,i)=>{const b=document.createElement('button');b.type='button';b.className='opt';b.innerHTML='<span class="sw" style="background:'+f.c+'"></span>'+f.name;b.onclick=()=>{st.folder=i;st.step=2;st.touched=true;draw();};$('folders').appendChild(b);});
+  ['ChatGPT','Gemini'].forEach(t=>{const b=document.createElement('button');b.type='button';b.className='opt';b.textContent=t;b.onclick=()=>{st.target=t;st.step=3;st.touched=true;draw();};$('targets').appendChild(b);});
+  let joinShown=false;
+  function showJoin(){if(joinShown)return;joinShown=true;const j=$('join');j.hidden=false;j.classList.add('in');dcEvent('demo-capture');}
+  $('capBtn').onclick=()=>{st.step=1;st.touched=true;draw();showJoin();};
+  $('replay').onclick=()=>{st.step=0;st.touched=false;draw();};
+  function draw(){
+    [...pills.children].forEach((b,i)=>{b.className='pill'+(i===st.step?' on':i<st.step?' done':'');b.setAttribute('aria-pressed',i===st.step);});
+    $('stepLabel').textContent='Step '+(st.step+1)+' of 4';
+    const f=folders[st.folder];
+    $('resp').style.borderColor= st.step===0?'':(st.step===1?'#6E8EF5':f.c);
+    document.querySelectorAll('#loop [data-s]').forEach(el=>el.hidden=Number(el.dataset.s)!==st.step);
+    $('fSw').style.background=f.c; $('fName').textContent=f.name;
+    $('fileName').textContent=f.name.toLowerCase().replace(/\s+/g,'-')+'-handoff.docx';
+    document.querySelectorAll('#loop .tgt').forEach(e=>e.textContent=st.target);
+    $('loopFoot').textContent= st.touched?'You’re driving. Replay to autoplay again.':'Playing on its own. Tap any step to take over.';
+  }
+  draw();
+  if(!reduce){setInterval(()=>{if(st.touched)return;st.step=(st.step+1)%4;draw();},3200);}
+  else{st.touched=true;draw();}
+
+  /* ---------- Forms: early access + contact ---------- */
+  const okEmail=v=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
+  const fallback='mailto:markneed@gogojuju.com';
+  async function send(payload){
+    const r=await fetch(window.DC_CONFIG.formEndpoint,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(Object.assign({page:location.href,_template:'table',_captcha:'false'},payload))});
+    if(!r.ok)throw new Error('status '+r.status);
+  }
+  function mailto(subject,body){return fallback+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);}
+  function failMsg(el,btn,label,href){btn.disabled=false;btn.textContent=label;el.textContent='That didn’t go through. ';const a=document.createElement('a');a.href=href||fallback;a.textContent='Send it by email instead';el.appendChild(a);el.appendChild(document.createTextNode(' (your details are already filled in).'));}
+  document.querySelectorAll('form.signup').forEach(form=>{
+    const input=form.querySelector('input[type=email]'),btn=form.querySelector('button[type=submit]'),msg=form.querySelector('.msg'),label=btn.textContent;
+    form.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const email=input.value.trim();
+      if(!okEmail(email)){msg.textContent='Enter a full email address, like you@example.com.';input.focus();return;}
+      btn.disabled=true;btn.textContent='Sending…';msg.textContent='';
+      try{
+        await send({email:email,source:form.dataset.source,_subject:'New Dubblecheck early-access signup'});
+        form.querySelector('.f').hidden=true;
+        msg.textContent='You’re on the list. We’ll email '+email+' when early access opens.';
+        dcEvent('email-joined-'+form.dataset.source);
+      }catch(err){failMsg(msg,btn,label,mailto('Dubblecheck early access','Please add me to the Dubblecheck early-access list.\n\nEmail: '+email));}
+    });
+  });
+  const cf=$('contactForm');
+  document.querySelectorAll('a[data-topic]').forEach(a=>a.addEventListener('click',()=>{$('cTopic').value=a.dataset.topic;}));
+  cf.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const name=$('cName').value.trim(),email=$('cEmail').value.trim(),message=$('cMsg').value.trim();
+    const btn=cf.querySelector('button[type=submit]'),msg=cf.querySelector('.msg'),label=btn.textContent;
+    if(!name){msg.textContent='Add your name.';$('cName').focus();return;}
+    if(!okEmail(email)){msg.textContent='Enter a full email address so we can reply.';$('cEmail').focus();return;}
+    if(!message){msg.textContent='Write a message before sending.';$('cMsg').focus();return;}
+    btn.disabled=true;btn.textContent='Sending…';msg.textContent='';
+    try{
+      await send({name:name,email:email,message:message,topic:$('cTopic').value,source:'contact',_replyto:email,_subject:'Dubblecheck message: '+$('cTopic').value});
+      cf.querySelectorAll('.fld').forEach(f=>f.hidden=true);btn.parentElement.hidden=true;
+      msg.textContent='Message sent. You’ll get a reply at '+email+'.';
+      dcEvent('contact-sent');
+    }catch(err){failMsg(msg,btn,label,mailto('Dubblecheck message: '+$('cTopic').value,message+'\n\n— '+name+' ('+email+')'));}
+  });
+
+  /* ---------- Library demo ---------- */
+  const colors={'Novel draft':'#6E8EF5','Pricing model':'#F59E4B','Lit review':'#7FC8A9'};
+  const threads=[
+    {t:'Tiered pricing, draft 2',ai:'Claude',f:'Pricing model',w:'Today',c:'3 clips'},
+    {t:'Margin check on tier 2',ai:'Gemini',f:'Pricing model',w:'Yesterday',c:'2 clips'},
+    {t:'Spaced vs. massed practice',ai:'Claude',f:'Lit review',w:'Sep 24',c:'4 clips'},
+    {t:'Citation check, source list',ai:'ChatGPT',f:'Lit review',w:'Sep 21',c:'5 clips'},
+    {t:'Chapter 3 opening, tone pass',ai:'ChatGPT',f:'Novel draft',w:'Sep 18',c:'2 clips'}];
+  const clipData=[
+    {id:'a',s:'Claude, Lit review',x:'Spacing effect: memories hold longer when study is spread across several sessions.'},
+    {id:'b',s:'ChatGPT, Lit review',x:'Bjork (1994) is the standard cite for desirable difficulty.'},
+    {id:'c',s:'Gemini, Lit review',x:'State the null hypothesis before you present the findings.'}];
+  const L={tab:'index',ai:'All',picked:[],exported:false};
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  ['All','Claude','ChatGPT','Gemini'].forEach(a=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=a;b.dataset.ai=a;b.onclick=()=>{L.ai=a;drawL();};$('chips').appendChild(b);});
+  clipData.forEach(k=>{const b=document.createElement('button');b.type='button';b.className='clip';b.dataset.id=k.id;b.innerHTML='<span class="m"><span>'+esc(k.s)+'</span><span class="mk"></span></span><span class="x">'+esc(k.x)+'</span>';
+    b.onclick=()=>{const i=L.picked.indexOf(k.id);if(i<0)L.picked.push(k.id);else L.picked.splice(i,1);L.exported=false;drawL();};$('clips').appendChild(b);});
+  document.querySelectorAll('#lib [data-tab]').forEach(b=>b.onclick=()=>{L.tab=b.dataset.tab;drawL();});
+  $('expBtn').onclick=()=>{if(L.picked.length){L.exported=true;drawL();}};
+  $('startOver').onclick=()=>{L.picked=[];L.exported=false;drawL();};
+  function drawL(){
+    document.querySelectorAll('#lib [data-tab]').forEach(b=>{const on=b.dataset.tab===L.tab;b.className='pill'+(on?' on':'');b.setAttribute('aria-pressed',on);});
+    $('tabIndex').hidden=L.tab!=='index'; $('tabCanon').hidden=L.tab!=='canon';
+    [...$('chips').children].forEach(b=>{const on=b.dataset.ai===L.ai;b.className='chip'+(on?' on':'');b.setAttribute('aria-pressed',on);});
+    const list=threads.filter(t=>L.ai==='All'||t.ai===L.ai);
+    $('threads').innerHTML=list.map(t=>'<div class="thread"><div class="tt"><span class="sw" style="width:10px;height:10px;border-radius:3px;background:'+colors[t.f]+'"></span>'+esc(t.t)+'</div><div class="m"><span>'+t.ai+', '+t.f+'</span><span>'+t.w+', '+t.c+'</span></div></div>').join('');
+    [...$('clips').children].forEach(b=>{const on=L.picked.includes(b.dataset.id);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.querySelector('.mk').textContent=on?'Added':'+ Add';});
+    $('order').innerHTML=L.picked.length?L.picked.map((id,i)=>'<div>'+(i+1)+'. '+esc(clipData.find(k=>k.id===id).s)+'</div>').join(''):'<div style="color:var(--panel-muted)">Nothing added yet.</div>';
+    $('expBtn').disabled=!L.picked.length; $('expBtn').hidden=L.exported; $('expDone').hidden=!L.exported;
+    $('libCount').textContent=L.tab==='index'?list.length+' threads':L.picked.length+' in canon';
+  }
+  drawL();
+})();
+</script>
+</body>
+</html>
